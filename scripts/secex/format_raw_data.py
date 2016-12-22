@@ -1,26 +1,55 @@
 import click
-from os.path import basename
+import time
+import pandas as pd
+from os import path, makedirs, walk
 
 @click.command()
-@click.argument('file_path', type=click.Path(exists=True))
+@click.argument('folder', type=click.Path(exists=True))
 @click.argument('secex_type')
 @click.argument('output_path', default='output', type=click.Path())
-def main(file_path, secex_type, output_path):
-    start = time.time()
+def main(folder, secex_type, output_path):
+    for file_path in file_paths(folder):
+        print file_path
+        generate_csv(file_path, secex_type, output_path)
 
-    df = pd.read_csv(file_path, sep=";")
+def file_paths(folder):
+    if path.isfile(folder):
+        return [folder]
+
+    files = []
+
+    for dirpath,_,filenames in walk(folder):
+       for f in filenames:
+           files.append(path.abspath(path.join(dirpath, f)))
+
+    files.sort()
+    return files
+
+
+def generate_csv(file_path, secex_type, output_path):
+    columns = ['year', 'month', 'product', 'country', 'state', 'port', 'municipality', 'value', 'kg']
+    df = pd.read_csv(
+        file_path,
+        sep=";",
+        header=None,
+        names=columns,
+        converters={
+            "product": str,
+            'country': str,
+            'state': str,
+            'port': str,
+            'municipality': str,
+        },
+        engine='python'
+    )
+
     df['type'] = secex_type
 
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+    if not path.exists(output_path):
+        makedirs(output_path)
 
-    new_file_path = os.path.abspath(os.path.join(output_path, "{0}.csv".format(basename(file_path))))
-    df.to_csv(bz2.BZ2File(new_file_path, 'wb'), sep=";", index=True)
-    
-    total_run_time = (time.time() - start) / 60
-    print "Done."; print;
-    print "Total runtime: {0} minutes".format(int(total_run_time))
-    print; print;
+    new_file_path = path.abspath(path.join(output_path, 'secex_{0}_{1}.csv'.format(secex_type, df['year'][0])))
+    df.to_csv(new_file_path, sep=";", header=None, index=False)
 
 if __name__ == "__main__":
     main()
