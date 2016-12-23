@@ -52,15 +52,27 @@ def send_email(year, duration):
 
 
 def generate_csv_bz2(file_path, output_path):
-    df = pd.read_csv(file_path, sep=";", header=0)
 
-    year = df['Year'][0]
+    columns = ['ocupation', 'cnae', 'literacy', 'age', 'establishment', 'simple', 'municipality', 'employee', 'color', 'wage_received', 'average_monthly_wage', 'gender', 'establishment_size', 'year', ]
+    df = pd.read_csv(
+        file_path,
+        sep=";",
+        header=0,
+        names=columns,
+        converters={
+            'wage_received': lambda x : float(x.replace(',','.')),
+            'average_monthly_wage': lambda x : float(x.replace(',','.'))
+        },
+        engine='python'
+    )
+
+    year = df['year'][0]
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
     new_file_path = os.path.join(output_path, "rais_{0}.csv.bz2".format(year))
-    df.to_csv(bz2.BZ2File(new_file_path, 'wb'), sep="|", index=False, header=False, decimal=".")
+    df.to_csv(bz2.BZ2File(new_file_path, 'wb'), sep="|", index=False, header=False)
 
 
 if __name__ == "__main__":
