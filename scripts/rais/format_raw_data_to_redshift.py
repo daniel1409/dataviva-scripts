@@ -60,7 +60,7 @@ def generate_csv_bz2(file_path, output_path):
         os.makedirs(output_path)
 
     new_file_path = os.path.join(output_path, "rais_{0}.csv.bz2".format(year))
-    df.to_csv(bz2.BZ2File(new_file_path, 'wb'), sep=";", index=False, header=False)
+    df.to_csv(bz2.BZ2File(new_file_path, 'wb'), sep="|", index=False, header=False, decimal=".")
 
 
 if __name__ == "__main__":
