@@ -27,7 +27,7 @@ def file_paths(folder):
 
 
 def generate_csv(file_path, secex_type, output_path):
-    columns = ['year', 'month', 'product', 'country', 'state', 'port', 'municipality', 'value', 'kg']
+    columns = ['year', 'month', 'product', 'country', 'state', 'port', 'municipality', 'kg', 'value']
     df = pd.read_csv(
         file_path,
         sep=";",
