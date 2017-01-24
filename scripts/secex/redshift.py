@@ -223,6 +223,8 @@ class Secex():
                 'HS_07': str,
                 'UF_IBGE': str,
                 'MUN_IBGE': str,
+                'KG_LIQUIDO': lambda x: int(float(x)),
+                'VL_FOB': lambda x: int(float(x))
             }
         ).rename(columns={
             'CO_ANO': 'year',
@@ -255,8 +257,10 @@ class Secex():
 @click.argument('output', default='redshift/raw_from_mysql/secex_formatted', type=click.Path())
 def main(input, output):
     for csv_path in s3.get_keys(input):
-        secex = Secex(csv_path)
+        import time
+        start = time.time()
 
+        secex = Secex(csv_path)
         secex.add_type()
         
         location = Location()
@@ -266,6 +270,11 @@ def main(input, output):
         secex.df = product.add_columns(secex.df)
         
         s3.save_df(secex.df, path.join(output, secex.filename))
+        
+        end = time.time()
+        time = end - start
+
+        print 'Time: %02d:%02d' % (time / 60, time % 60)
         print
 
 
