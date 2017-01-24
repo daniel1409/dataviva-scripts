@@ -1,5 +1,6 @@
 import boto3
 import click
+import time
 import pandas as pd
 from io import BytesIO
 from os import path, environ
@@ -31,18 +32,6 @@ class S3():
                 keys.append(obj['Key'])
 
         return keys
-
-    def save_df(self, df, prefix):
-        csv_buffer = BytesIO()
-
-        df.to_csv(
-            csv_buffer,
-            sep="|",
-            index=False,
-        )
-
-        self.resource.Object('dataviva-etl', prefix).put(Body=csv_buffer.getvalue())
-        print 'Saved.'
 
 
 class Location():
@@ -102,7 +91,7 @@ class Location():
                 missing.add(row['municipality'])
         
         if missing:
-            print 'Municipalities without microregion and mesoregion: ', list(missing)
+            print ' Municipalities without microregion and mesoregion: ', list(missing)
 
         df = df.drop('_merge', 1)
 
@@ -126,7 +115,7 @@ class Location():
                 missing.add(row['country'])
         
         if missing:
-            print 'Countries without continent: ', list(missing)
+            print ' Countries without continent: ', list(missing)
 
         df = df.drop('_merge', 1)
 
@@ -204,11 +193,17 @@ class Product():
 
 
 class Secex():
+    def __del__(self):
+        total = time.time() - self.start
+
+        print '  Time: %02d:%02d\n' % (total / 60, total % 60)
+
     def __init__(self, csv_path):
         self.csv_path = csv_path
         self.filename = path.basename(csv_path)
+        self.start = time.time()
+        
         print self.filename
-
         self.open_df()
 
     def open_df(self):
@@ -238,6 +233,18 @@ class Secex():
             'MUN_IBGE': 'municipality'
         })
 
+    def save(self, output):
+        csv_buffer = BytesIO()
+
+        self.df.to_csv(
+            csv_buffer,
+            sep="|",
+            index=False,
+            columns=['type', 'year', 'month', 'continent', 'country', 'mesoregion', 'microregion', 'state', 'municipality', 'port', 'product_section', 'product_chapter', 'product', 'kg', 'value']
+        )
+
+        s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
+        print '  Saved.'
 
     def add_type(self):
         if 'import' in self.csv_path:
@@ -257,9 +264,6 @@ class Secex():
 @click.argument('output', default='redshift/raw_from_mysql/secex_formatted', type=click.Path())
 def main(input, output):
     for csv_path in s3.get_keys(input):
-        import time
-        start = time.time()
-
         secex = Secex(csv_path)
         secex.add_type()
         
@@ -269,14 +273,7 @@ def main(input, output):
         product = Product()
         secex.df = product.add_columns(secex.df)
         
-        s3.save_df(secex.df, path.join(output, secex.filename))
-        
-        end = time.time()
-        time = end - start
-
-        print 'Time: %02d:%02d' % (time / 60, time % 60)
-        print
-
+        secex.save(output)
 
 s3 = S3()
 
