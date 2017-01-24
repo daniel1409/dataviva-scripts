@@ -1,91 +1,219 @@
 import boto3
+import click
 import pandas as pd
 from io import BytesIO
 from os import path, environ
 
-def read_csv_from_s3(csv_path):
-        client = boto3.client(
+class S3():
+    def __init__(self):
+        self.client = boto3.client(
             's3',
             aws_access_key_id=environ['S3_ACCESS_KEY'],
             aws_secret_access_key=environ['S3_SECRET_KEY']
         )
 
-        keys = [obj['Key'] for obj in client.list_objects(Bucket='dataviva-etl', Prefix=csv_path)['Contents']]
+        self.resource = boto3.resource(
+            's3',
+            aws_access_key_id=environ['S3_ACCESS_KEY'],
+            aws_secret_access_key=environ['S3_SECRET_KEY']
+        )
 
-        obj = client.get_object(Bucket='dataviva-etl', Key=csv_path)
+    def read_csv(self, csv_path):
+        csv = self.client.get_object(Bucket='dataviva-etl', Key=csv_path)['Body']
 
-        return obj['Body']
+        return csv
 
+    def get_keys(self, prefix):
+        keys = []
 
-def get_keys_from_s3(prefix):
-    client = boto3.client(
-        's3',
-        aws_access_key_id=environ['S3_ACCESS_KEY'],
-        aws_secret_access_key=environ['S3_SECRET_KEY']
-    )
+        for obj in self.client.list_objects(Bucket='dataviva-etl', Prefix=prefix)['Contents']:
+            if obj['Size'] > 0:
+                keys.append(obj['Key'])
 
-    keys = []
+        return keys
 
-    for obj in client.list_objects(Bucket='dataviva-etl', Prefix=prefix)['Contents']:
-        if obj['Size'] > 0:
-            keys.append(obj['Key'])
+    def save_df(self, df, prefix):
+        csv_buffer = BytesIO()
 
-    return keys
+        df.to_csv(
+            csv_buffer,
+            sep="|",
+            index=False,
+        )
+
+        self.resource.Object('dataviva-etl', prefix).put(Body=csv_buffer.getvalue())
+        print 'Saved.'
 
 
 class Location():
-
     def __init__(self):
         self.municipalities_df = self.open_municipalities_df()
-
+        self.continents_df = self.open_continents_df()
 
     def open_municipalities_df(self):
-        columns = ['uf_id', 'uf_name', 'mesoregion', 'mesorregiao_name', 'microregion', 'microrregiao_name', 'municipality', 'municipio_name', 'municipio_id_mdic']
         df = pd.read_csv(
-            read_csv_from_s3('attrs/attrs_municipios.csv'),
+            s3.read_csv('attrs/attrs_municipios.csv'),
             sep=';',
-            names=columns,
             header=0,
-            usecols=['mesoregion', 'microregion', 'municipality'],
+            usecols=['mesorregiao_id', 'microrregiao_id', 'municipio_id'],
             converters={
-                'mesoregion': str,
-                'microregion': str,
-                'municipality': str,
+                'mesorregiao_id': str,
+                'microrregiao_id': str,
+                'municipio_id': str,
             }
-        )
+        ).rename(columns={
+            'mesorregiao_id': 'mesoregion',
+            'microrregiao_id': 'microregion',
+            'municipio_id': 'municipality'
+        })
 
         return df
 
+    def open_continents_df(self):
+        df = pd.read_csv(
+            s3.read_csv('attrs/attrs_continente.csv'),
+            sep=';',
+            header=0,
+            usecols=['continente_id', 'mdic_country_id'],
+            converters={
+                'continente_id': str,
+                'mdic_country_id': lambda x: str(x).zfill(3)
+            }
+        ).rename(columns={
+            'continente_id': 'continent',
+            'mdic_country_id': 'country'
+        })
 
-    def add_columns_microregion_and_mesoregion_to_df(self, df):
-        import pdb; pdb.set_trace()
+        return df
+
+    def add_microregion_and_mesoregion(self, df):
         df = pd.merge(
                 df, 
                 self.municipalities_df,
                 on='municipality',
-                how='left'
+                how='left',
+                indicator=True
             )
-        import pdb; pdb.set_trace()
+
+        missing = set()
+
+        for _, row in df.iterrows():
+            if row['_merge'] == 'left_only':
+                missing.add(row['municipality'])
+        
+        if missing:
+            print 'Municipalities without microregion and mesoregion: ', list(missing)
+
+        df = df.drop('_merge', 1)
+
+        print '+ microregion and mesoregion'
+
+        return df
+
+    def add_continent(self, df):
+        df = pd.merge(
+                df, 
+                self.continents_df,
+                on='country',
+                how='left',
+                indicator=True
+            )
+
+        missing = set()
+
+        for _, row in df.iterrows():
+            if row['_merge'] == 'left_only':
+                missing.add(row['country'])
+        
+        if missing:
+            print 'Countries without continent: ', list(missing)
+
+        df = df.drop('_merge', 1)
+
+        print '+ continent'
+
+        return df
+
+    def add_columns(self, df):
+        df = self.add_microregion_and_mesoregion(df)
+        df = self.add_continent(df)
         return df
 
 
+class Product():
+    def __init__(self):
+        self.products_df = self.open_products_df()
+
+    def open_products_df(self):
+        df = pd.read_csv(
+            s3.read_csv('redshift/attrs/attrs_hs.csv'),
+            sep=';',
+            header=0,
+            names=['id', 'name_pt', 'name_en', 'profundidade_id', 'profundidade'],
+            usecols=['id'],
+            converters={
+                'id': str
+            }
+        )
+
+        product = []
+        product_section = []
+        product_chapter = []
+
+        for id in df['id'].tolist():
+            if len(id) == 6:
+                product.append(id[2:])
+                product_section.append(id[:2])
+                product_chapter.append(id[2:4])
+
+        df = pd.DataFrame({
+            'product': pd.Series(product),
+            'product_section': pd.Series(product_section),
+            'product_chapter': pd.Series(product_chapter)
+        })
+
+        return df
+
+    def add_section_and_chapter(self, df):
+        df = pd.merge(
+                df, 
+                self.products_df,
+                on='product',
+                how='left',
+                indicator=True
+            )
+
+        missing = set()
+
+        for _, row in df.iterrows():
+            if row['_merge'] == 'left_only':
+                missing.add(row['product'])
+        
+        if missing:
+            print 'Products without section and chapter: ', list(missing)
+
+        df = df.drop('_merge', 1)
+
+        print '+ section and chapter'
+
+        return df
 
     def add_columns(self, df):
-        df = self.add_columns_microregion_and_mesoregion_to_df(df)
+        df = self.add_section_and_chapter(df)
         return df
 
 
 class Secex():
-    
     def __init__(self, csv_path):
         self.csv_path = csv_path
         self.filename = path.basename(csv_path)
+        print self.filename
+
         self.open_df()
 
     def open_df(self):
-
         self.df = pd.read_csv(
-            read_csv_from_s3(self.csv_path),
+            s3.read_csv(self.csv_path),
             sep=';',
             header=0,
             usecols=['CO_ANO', 'CO_MES', 'CO_PAIS', 'CO_PORTO', 'KG_LIQUIDO', 'VL_FOB', 'HS_07', 'UF_IBGE', 'MUN_IBGE'],
@@ -108,51 +236,40 @@ class Secex():
             'MUN_IBGE': 'municipality'
         })
 
-    def save_df(self):
-        csv_buffer = BytesIO()
-        self.df.to_csv(
-            csv_buffer,
-            sep="|",
-            index=False,
-        )
-        
-        s3 = boto3.resource(
-            's3',
-            aws_access_key_id=environ['S3_ACCESS_KEY'],
-            aws_secret_access_key=environ['S3_SECRET_KEY']
-        )
-
-        s3.Object('dataviva-etl', 'redshift/teste/output/secex/' + self.filename).put(Body=csv_buffer.getvalue())
-
-
 
     def add_type(self):
         if 'import' in self.csv_path:
             self.df['type'] = 'import'
-        else:
+        
+        elif 'export' in self.csv_path:
             self.df['type'] = 'export'
 
+        else:
+            print 'Filename must contain import or export.'
+            raise Exception
 
+        print '+ type'
 
-def main():
-
-    for csv_path in get_keys_from_s3('redshift/teste/input/secex'):
+@click.command()
+@click.argument('input', default='redshift/raw_from_mysql/secex', type=click.Path())
+@click.argument('output', default='redshift/raw_from_mysql/secex_formatted', type=click.Path())
+def main(input, output):
+    for csv_path in s3.get_keys(input):
         secex = Secex(csv_path)
-        print secex.filename
 
         secex.add_type()
-        print 'Added type.'
         
         location = Location()
         secex.df = location.add_columns(secex.df)
-        print 'Added location.'
-        
-        secex.save_df()
-        print 'Saved.'
 
+        product = Product()
+        secex.df = product.add_columns(secex.df)
+        
+        s3.save_df(secex.df, path.join(output, secex.filename))
         print
 
 
+s3 = S3()
 
 if __name__ == '__main__':
     main()
