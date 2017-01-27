@@ -29,29 +29,31 @@ class Rais():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            usecols=['PIS', 'IDENTIFICAD', 'MUNICIPIO', 'SEXO', 'IDADE', 'ETNIA', 'ESCOLARIDADE', 'REMUNERACAO', 'CBO2002', 'CNAE20', 'TAM_ESTAB', 'SIMPLES', 'NATUR_JUR'],
+            names=['employee', 'establishment', 'municipality', 'gender', 'age', 'ethnicity', 'literacy', 'wage', 'occupation', 'cnae', 'establishment_size', 'simple', 'legal_nature'],
             converters={
-                'PIS': str,
-                'IDENTIFICAD': str,
-                'MUNICIPIO': str,
-                'CBO2002': str,
-                'CNAE20': str
-            }
-        ).rename(columns={
-            'PIS': 'employee',
-            'IDENTIFICAD': 'establishment',
-            'MUNICIPIO': 'municipality',
-            'SEXO': 'gender',
-            'IDADE': 'age',
-            'ETNIA': 'ethnicity',
-            'ESCOLARIDADE': 'literacy',
-            'REMUNERACAO': 'wage',
-            'CBO2002': 'occupation',
-            'CNAE20': 'cnae',
-            'TAM_ESTAB': 'establishment_size',
-            'SIMPLES': 'simple',
-            'NATUR_JUR': 'legal_nature'
-        })
+                'employee': str,
+                'establishment': str,
+                'municipality': str,
+                'occupation': str,
+                'cnae': str
+            },
+            dtype={
+                'employee': 'str',
+                'establishment': 'str',
+                'municipality': 'str',
+                'gender': 'int8',
+                'age': 'int8',
+                'ethnicity': 'int8',
+                'literacy': 'int8',
+                'wage': 'float64',
+                'occupation': 'str',
+                'cnae': 'str',
+                'establishment_size': 'int8',
+                'simple': 'int8',
+                'legal_nature': 'int8'
+            },
+            engine='c'
+        )
 
     def save(self, output):
         csv_buffer = BytesIO()
@@ -60,7 +62,7 @@ class Rais():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'mesoregion', 'microregion', 'state', 'municipality', 'occupation', 'occupation_group', 'cnae', 'cnae_division', 'cnae_section', 'establishment', 'employee', 'ethnicity', 'establishment_size', 'gender', 'legal_nature', 'literacy', 'simple', 'age', 'wage']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'occupation', 'occupation_group', 'cnae', 'cnae_division', 'cnae_section', 'establishment', 'employee', 'ethnicity', 'establishment_size', 'gender', 'legal_nature', 'literacy', 'simple', 'age', 'wage']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
