@@ -26,6 +26,13 @@ class Location():
             'municipio_id': 'municipality'
         })
 
+        regions = []
+
+        for state in df['state']:
+            regions.append(state[0])
+
+        df['region'] = regions
+
         return df
 
     def open_continents_df(self):
