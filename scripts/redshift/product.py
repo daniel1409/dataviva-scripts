@@ -41,20 +41,8 @@ class Product():
                 df, 
                 self.products_df,
                 on='product',
-                how='left',
-                indicator=True
+                how='left'
             )
-
-        missing = set()
-
-        for _, row in df.iterrows():
-            if row['_merge'] == 'left_only':
-                missing.add(row['product'])
-        
-        if missing:
-            print 'Products without section and chapter: ', list(missing)
-
-        df = df.drop('_merge', 1)
 
         print '+ section and chapter'
 

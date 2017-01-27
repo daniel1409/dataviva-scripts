@@ -38,20 +38,8 @@ class Occupation():
                 df, 
                 self.occupations_df,
                 on='occupation',
-                how='left',
-                indicator=True
+                how='left'
             )
-
-        missing = set()
-
-        for _, row in df.iterrows():
-            if row['_merge'] == 'left_only':
-                missing.add(row['occupation'])
-        
-        if missing:
-            print 'Occupations without group: ', list(missing)
-
-        df = df.drop('_merge', 1)
 
         print '+ occupation group'
 

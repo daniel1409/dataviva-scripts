@@ -50,20 +50,8 @@ class Location():
                 df, 
                 self.municipalities_df,
                 on='municipality',
-                how='left',
-                indicator=True
+                how='left'
             )
-
-        missing = set()
-
-        for _, row in df.iterrows():
-            if row['_merge'] == 'left_only':
-                missing.add(row['municipality'])
-        
-        if missing:
-            print ' Municipalities without microregion and mesoregion: ', list(missing)
-
-        df = df.drop('_merge', 1)
 
         print '+ microregion and mesoregion'
 
@@ -74,20 +62,8 @@ class Location():
                 df, 
                 self.continents_df,
                 on='country',
-                how='left',
-                indicator=True
+                how='left'
             )
-
-        missing = set()
-
-        for _, row in df.iterrows():
-            if row['_merge'] == 'left_only':
-                missing.add(row['country'])
-        
-        if missing:
-            print ' Countries without continent: ', list(missing)
-
-        df = df.drop('_merge', 1)
 
         print '+ continent'
 

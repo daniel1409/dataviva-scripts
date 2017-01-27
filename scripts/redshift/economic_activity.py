@@ -41,20 +41,8 @@ class EconomicActivity():
                 df, 
                 self.economic_activities_df,
                 on='cnae',
-                how='left',
-                indicator=True
+                how='left'
             )
-
-        missing = set()
-
-        for _, row in df.iterrows():
-            if row['_merge'] == 'left_only':
-                missing.add(row['cnae'])
-        
-        if missing:
-            print 'Economic activity without division and section: ', list(missing)
-
-        df = df.drop('_merge', 1)
 
         print '+ class, division and section'
 
