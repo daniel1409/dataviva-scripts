@@ -15,12 +15,11 @@ class Rais():
 
         print '  Time: %02d:%02d\n' % (total / 60, total % 60)
 
-    def __init__(self, s3, municipalities, csv_path):
+    def __init__(self, s3, csv_path):
         self.s3 = s3
         self.csv_path = csv_path
         self.filename = path.basename(csv_path)
         self.start = time.time()
-        self.municipalities = municipalities
         
         print self.filename
         self.open_df()
@@ -76,12 +75,14 @@ class Rais():
 
         print '+ year'
 
-    def fix_municipality(self):
-        municipalities = []
-        for _, row in self.df.iterrows():
-            municipalities.append(self.municipalities[ row['municipality']])
+    def fix_municipality(self, location):
+        municipalities = {}
 
-        self.df['municipality'] = municipalities
+        for _, row in location.municipalities_df.iterrows():
+                id_ibge = row['municipality'][:-1]
+                municipalities[id_ibge] = add_dv_to_id_ibge(id_ibge)
+
+        self.df['municipality'].replace(municipalities, inplace=True)
 
 
 def add_dv_to_id_ibge(id_ibge):
@@ -121,25 +122,18 @@ def add_dv_to_id_ibge(id_ibge):
 
 
 @click.command()
-@click.argument('input', default='redshift/raw_from_mysql/rais', type=click.Path())
-@click.argument('output', default='redshift/raw_from_mysql/rais_formatted', type=click.Path())
+@click.argument('input', default='redshift/teste/input/rais', type=click.Path())
+@click.argument('output', default='redshift/teste/output/rais', type=click.Path())
 def main(input, output):
     s3 = S3()
     location = Location(s3)
     occupation = Occupation(s3)
     economic_activity = EconomicActivity(s3)
-
-
-    municipalities = {}
-    for _, row in location.municipalities_df.iterrows():
-            id_ibge = row['municipality'][:-1]
-            municipalities[id_ibge] = add_dv_to_id_ibge(id_ibge)
-
     
     for csv_path in s3.get_keys(input):
-        rais = Rais(s3, municipalities, csv_path)
+        rais = Rais(s3, csv_path)
+        rais.fix_municipality(location)
         rais.add_year()
-        rais.fix_municipality()
 
         rais.df = location.add_columns(rais.df)
         rais.df = occupation.add_columns(rais.df)
