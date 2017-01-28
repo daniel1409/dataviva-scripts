@@ -5,16 +5,12 @@ from io import BytesIO
 from os import path
 
 from s3 import S3
+from notification import Notification
 from location import Location
 from occupation import Occupation
 from economic_activity import EconomicActivity
 
 class Rais():
-    def __del__(self):
-        total = time.time() - self.start
-
-        print '  Time: %02d:%02d\n' % (total / 60, total % 60)
-
     def __init__(self, s3, csv_path):
         self.s3 = s3
         self.csv_path = csv_path
@@ -66,7 +62,11 @@ class Rais():
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
+
+        self.duration = time.time() - self.start
+        self.duration_str = '%02d:%02d' % (self.duration / 60, self.duration % 60)
         print '  Saved.'
+        print '  Time: %s' % self.duration_str
 
     def add_year(self):
         try:
@@ -150,12 +150,14 @@ class Rais():
 @click.argument('output', default='redshift/raw_from_mysql/rais_formatted', type=click.Path())
 def main(input, output):
     s3 = S3()
+    notification = Notification()
     location = Location(s3)
     occupation = Occupation(s3)
     economic_activity = EconomicActivity(s3)
     
     for csv_path in s3.get_keys(input):
         rais = Rais(s3, csv_path)
+        
         rais.fix_municipality(location)
         rais.add_year()
 
@@ -164,6 +166,7 @@ def main(input, output):
         rais.df = economic_activity.add_columns(rais.df)
 
         rais.save(output)
+        notification.send_email('sauloantuness@gmail.com', rais.filename, rais.duration_str)
 
 
 if __name__ == '__main__':
