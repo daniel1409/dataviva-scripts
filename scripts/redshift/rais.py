@@ -82,6 +82,11 @@ class Rais():
 
         print '+ year'
 
+    def fix_cnae(self):
+        if len(self.df['cnae'][0]) > 5:
+            self.df['cnae'] = self.df['cnae'].apply(lambda x: x[:5])
+            print '+ fix cnae'
+
     def fix_municipality(self, location):
         municipalities_6 = []
         municipalities_7 = []
@@ -164,6 +169,7 @@ def main(input, output):
         rais = Rais(s3, csv_path)
         
         rais.fix_municipality(location)
+        rais.fix_cnae()
         rais.add_year()
 
         rais.df = location.add_columns(rais.df)
