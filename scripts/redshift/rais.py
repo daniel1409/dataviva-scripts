@@ -31,7 +31,12 @@ class Rais():
                 'establishment': str,
                 'municipality': str,
                 'occupation': str,
-                'cnae': str
+                'cnae': str,
+                'age': lambda x: x if x else 0,
+                'literacy': lambda x: x if x else -1,
+                'establishment_size': lambda x: x if x else -1,
+                'simple': lambda x: x if x else 0,
+                'legal_nature': lambda x: x if x else -1,
             },
             dtype={
                 'employee': 'str',
