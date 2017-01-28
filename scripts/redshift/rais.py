@@ -31,7 +31,7 @@ class Rais():
                 'establishment': str,
                 'municipality': str,
                 'occupation': str,
-                'cnae': str,
+                'cnae': lambda x: str(x)[:5],
                 'age': lambda x: x if x else 0,
                 'literacy': lambda x: x if x else -1,
                 'establishment_size': lambda x: x if x else -1,
@@ -81,11 +81,6 @@ class Rais():
             print 'Filename must be in format "rais_yyyy.csv".'
 
         print '+ year'
-
-    def fix_cnae(self):
-        if len(self.df['cnae'][0]) > 5:
-            self.df['cnae'] = self.df['cnae'].apply(lambda x: x[:5])
-            print '+ fix cnae'
 
     def fix_municipality(self, location):
         municipalities_6 = []
@@ -169,7 +164,6 @@ def main(input, output):
         rais = Rais(s3, csv_path)
         
         rais.fix_municipality(location)
-        rais.fix_cnae()
         rais.add_year()
 
         rais.df = location.add_columns(rais.df)
