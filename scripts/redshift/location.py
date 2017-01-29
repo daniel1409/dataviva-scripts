@@ -52,7 +52,7 @@ class Location():
 
         return df
 
-    def add_state_microregion_and_mesoregion(self, df):
+    def add_region_mesoregion_microregion_and_state(self, df):
         df = pd.merge(
                 df, 
                 self.municipalities_df,
@@ -60,7 +60,7 @@ class Location():
                 how='left'
             )
 
-        print '+ microregion and mesoregion'
+        print '+ region, mesoregion, microregion and state'
 
         return df
 
@@ -76,6 +76,10 @@ class Location():
 
         return df
 
-    def add_columns(self, df):
-        df = self.add_state_microregion_and_mesoregion(df)
+    def add_columns(self, df, continent=False):
+        df = self.add_region_mesoregion_microregion_and_state(df)
+
+        if continent:
+            df = self.add_continent(df)
+
         return df
