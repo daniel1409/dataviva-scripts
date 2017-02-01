@@ -6,6 +6,7 @@ class Location():
         self.s3 = s3
         self.municipalities_df = self.open_municipalities_df()
         self.continents_df = self.open_continents_df()
+        self.wld_df = self.open_wld_df()
 
     def open_municipalities_df(self):
         df = pd.read_csv(
@@ -48,6 +49,22 @@ class Location():
         ).rename(columns={
             'continente_id': 'continent',
             'mdic_country_id': 'country'
+        })
+
+        return df
+
+    def open_wld_df(self):
+        df = pd.read_csv(
+            self.s3.read_csv('attrs/attrs_wld.csv'),
+            sep=';',
+            header=0,
+            usecols=['id_num', 'id_mdic'],
+            converters={
+                'id_num': lambda x: int(x) if x.isdigit() else '',
+                'id_mdic': lambda x: str(x).zfill(3) if x.isdigit() else ''
+            }
+        ).rename(columns={
+            'id_mdic': 'country'
         })
 
         return df
