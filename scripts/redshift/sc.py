@@ -26,7 +26,8 @@ class Sc():
             names=['year', 'COD_MATRICULA', 'COD_ALUNO', 'age', 'gender', 'MUNICIPIO_END', 'class', 'COD_ENTIDADE', 'municipality', 'DEPENDENCIA_ADM', 'ethnicity', 'course', 'COD_ETAPA_ENSINO'],
             usecols=['year', 'age', 'gender', 'class', 'municipality', 'ethnicity', 'course'],
             converters={
-                'course': lambda x: '' if x == 'NULL' else str(x),
+                'course': lambda x: '' if x == 'NULL' else str(x).strip(),
+                'class': lambda x: '' if x == 'NULL' else str(x).strip(),
                 'municipality': lambda x: '' if x == 'NULL' else str(x),
                 'age': lambda x: 0 if not x or x == 'NULL' else x,
             },
