@@ -23,27 +23,20 @@ class Secex():
     def open_df(self):
         self.df = pd.read_csv(
             self.s3.read_csv(self.csv_path),
-            sep=';',
+            sep=',',
             header=0,
-            usecols=['CO_ANO', 'CO_MES', 'CO_PAIS', 'CO_PORTO', 'KG_LIQUIDO', 'VL_FOB', 'HS_07', 'MUN_IBGE'],
+            names=['year', 'month', 'CO_SH4', 'country', 'port', 'kg', 'value', 'product', 'UF_IBGE', 'municipality'],
+            usecols=['year', 'month', 'country', 'port', 'kg', 'value', 'product', 'municipality'],
             converters={
-                'CO_PAIS': str,
-                'CO_PORTO': str,
-                'HS_07': str,
-                'MUN_IBGE': str,
-                'KG_LIQUIDO': lambda x: int(float(x)),
-                'VL_FOB': lambda x: int(float(x))
-            }
-        ).rename(columns={
-            'CO_ANO': 'year',
-            'CO_MES': 'month',
-            'CO_PAIS': 'country',
-            'CO_PORTO': 'port',
-            'KG_LIQUIDO': 'kg',
-            'VL_FOB': 'value',
-            'HS_07': 'product',
-            'MUN_IBGE': 'municipality'
-        })
+                'country': str,
+                'port': str,
+                'product': str,
+                'municipality': str,
+                'kg': lambda x: int(float(x)),
+                'value': lambda x: int(float(x))
+            },
+            engine='c'
+        )
 
     def save(self, output):
         csv_buffer = BytesIO()
@@ -77,7 +70,7 @@ class Secex():
 
 
 @click.command()
-@click.argument('input', default='redshift/raw_from_mysql/secex', type=click.Path())
+@click.argument('input', default='redshift/raw_from_mysql/secex/', type=click.Path())
 @click.argument('output', default='redshift/raw_from_mysql/secex_formatted', type=click.Path())
 def main(input, output):
     s3 = S3()
@@ -93,7 +86,7 @@ def main(input, output):
         secex.df = product.add_columns(secex.df)
 
         secex.save(output)
-        notification.send_email('sauloantuness@gmail.com', secex.filename, secex.duration_str)
+        # notification.send_email('sauloantuness@gmail.com', secex.filename, secex.duration_str)
 
 
 if __name__ == '__main__':
