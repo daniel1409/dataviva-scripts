@@ -100,3 +100,72 @@ class Location():
             df = self.add_continent(df)
 
         return df
+
+    def fix_municipality(self, df):
+        municipalities_6 = []
+        municipalities_7 = []
+
+        for _, row in self.municipalities_df.iterrows():
+                id_ibge = row['municipality']
+                municipalities_6.append(id_ibge[:-1])
+                municipalities_7.append(id_ibge)
+
+        municipalities_df = pd.DataFrame({
+            'municipality': pd.Series(municipalities_6),
+            'municipality7': pd.Series(municipalities_7)
+        })
+
+        df = pd.merge(
+            df, 
+            municipalities_df,
+            on='municipality',
+            how='left'
+        )
+
+        self.df.drop('municipality', 1, inplace=True)
+        self.df.rename(
+            columns={
+                'municipality7': 'municipality'
+            }, 
+            inplace=True
+        )
+
+        print '- fix municipalities'
+        return df
+
+
+    def add_dv_to_id_ibge(self, id_ibge):
+        invalid = {
+            '220191': '2201919',
+            '220225': '2202251',
+            '220198': '2201988',
+            '261153': '2611533',
+            '311783': '3117836',
+            '315213': '3152131',
+            '430587': '4305871',
+            '520393': '5203939',
+            '520396': '5203962'
+        }
+        
+        if invalid.get(id_ibge):
+            return invalid.get(id_ibge)
+
+        pesos = [1,2,1,2,1,2]
+        ponderacao = []
+
+        for i in range(6):
+            ponderacao.append(int(id_ibge[i]) * pesos[i])
+
+        ponderacao = map(lambda x: x if x < 10 else 1 + (x % 10), ponderacao)
+
+        soma = reduce(lambda x, y: x + y, ponderacao)
+
+        resto = soma % 10
+
+        if resto:
+            dv = 10 - resto
+        else:
+            dv = 0
+
+        return id_ibge + str(dv)
+
