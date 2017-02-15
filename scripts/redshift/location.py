@@ -122,8 +122,8 @@ class Location():
             how='left'
         )
 
-        self.df.drop('municipality', 1, inplace=True)
-        self.df.rename(
+        df.drop('municipality', 1, inplace=True)
+        df.rename(
             columns={
                 'municipality7': 'municipality'
             }, 
