@@ -86,7 +86,7 @@ def main(input, output):
         secex.df = product.add_columns(secex.df)
 
         secex.save(output)
-        # notification.send_email('sauloantuness@gmail.com', secex.filename, secex.duration_str)
+        notification.send_email('sauloantuness@gmail.com', secex.filename, secex.duration_str)
 
 
 if __name__ == '__main__':
