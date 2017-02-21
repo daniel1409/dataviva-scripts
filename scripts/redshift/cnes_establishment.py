@@ -24,11 +24,12 @@ class CnesEstablishment():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            names=['cnes','municipality','cod_cep','cpf_cnpj','pf_pj','cnpj_man','vinc_sus','tp_unid','tp_prest','nivate_a','nivate_h','qt_leito_hosp_cirurg','qt_leito_hosp_clin','qt_leito_hosp_complex','qt_sala_pedi_ue','qt_sala_rep_pedi_ue','qt_cons_odonto_ue','qt_sala_higie_ue','qt_sala_gesso_ue','qt_sala_curativo_ue','qt_sala_peqcirur_ue','qt_sala_cons_med_ue','urgemerg','qt_cons_clincbasica_amb','qt_cons_clincesp_amb','qt_cons_clincind_amb','qt_cons_nmed_amb','qt_sala_rep_ped_amb','qt_cons_odonto_amb','qt_sala_peqcirur_amb','qt_sala_enf_amb','qt_sala_imun_amb','qt_sala_nebu_amb','qt_sala_gesso_amb','qt_sala_cura_amb','qt_sala_ciruramb_amb','atendamb','qt_sala_cirur_cc','qt_sala_recup_cc','qt_sala_ciruramb_cc','centrcir','qt_sala_preparto_co','qt_sala_partonor_co','qt_sala_curetagem_co','qt_sala_cirur_co','centrobs','qt_leito_rep_pedi_ue','qt_equip_odonto_ue','qt_leito_rep_pedi_amb','qt_equip_odonto_amb','qt_leito_recu_cc','qt_leito_preparto_co','centrneo','atendhos','coletres','qt_sala_atend_adulto_ue','qt_sala_obs_adulto_ue','qt_sala_rep_amb','qt_leito_rep_ue','qt_leito_rep_amb','qt_leito_rn_nn','atencaobasica_amb','mediacomplexidade_amb','altacomplexidade_amb','internacao_hosp','mediacomplexidade_hosp','altacomplexidade_hosp','tipointernacao','tipodeambulatorio','tipodesadt','tipodeurgencia','niv_dep1','regsaude','esfera','retencao_2','niv_hier_2'],
-            usecols=['cnes', 'municipality'],
+            names=['cnes','municipality','cod_cep','cpf_cnpj','pf_pj','cnpj_man','sus_bond','establishment_type','tp_prest','nivate_a','nivate_h','qt_leito_hosp_cirurg','qt_leito_hosp_clin','qt_leito_hosp_complex','qt_sala_pedi_ue','qt_sala_rep_pedi_ue','qt_cons_odonto_ue','qt_sala_higie_ue','qt_sala_gesso_ue','qt_sala_curativo_ue','qt_sala_peqcirur_ue','qt_sala_cons_med_ue','urgemerg','qt_cons_clincbasica_amb','qt_cons_clincesp_amb','qt_cons_clincind_amb','qt_cons_nmed_amb','qt_sala_rep_ped_amb','qt_cons_odonto_amb','qt_sala_peqcirur_amb','qt_sala_enf_amb','qt_sala_imun_amb','qt_sala_nebu_amb','qt_sala_gesso_amb','qt_sala_cura_amb','qt_sala_ciruramb_amb','atendamb','qt_sala_cirur_cc','qt_sala_recup_cc','qt_sala_ciruramb_cc','centrcir','qt_sala_preparto_co','qt_sala_partonor_co','qt_sala_curetagem_co','qt_sala_cirur_co','centrobs','qt_leito_rep_pedi_ue','qt_equip_odonto_ue','qt_leito_rep_pedi_amb','qt_equip_odonto_amb','qt_leito_recu_cc','qt_leito_preparto_co','centrneo','atendhos','coletres','qt_sala_atend_adulto_ue','qt_sala_obs_adulto_ue','qt_sala_rep_amb','qt_leito_rep_ue','qt_leito_rep_amb','qt_leito_rn_nn','atencaobasica_amb','mediacomplexidade_amb','altacomplexidade_amb','internacao_hosp','mediacomplexidade_hosp','altacomplexidade_hosp','tipointernacao','tipodeambulatorio','tipodesadt','tipodeurgencia','niv_dep1','regsaude','esfera','retencao_2','niv_hier_2'],
+            usecols=['cnes', 'municipality', 'establishment_type', 'sus_bond'],
             converters={
                 'municipality': str,
-                'cnes': str
+                'cnes': str,
+                'type': str,
             },
             engine='c'
         )
@@ -40,7 +41,7 @@ class CnesEstablishment():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'establishment_type', 'sus_bond']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
