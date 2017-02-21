@@ -29,7 +29,7 @@ class CnesEstablishment():
             converters={
                 'municipality': str,
                 'cnes': str,
-                'type': str,
+                'establishment_type': str,
             },
             engine='c'
         )
