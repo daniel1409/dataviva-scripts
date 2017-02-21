@@ -7,6 +7,7 @@ from os import path
 from s3 import S3
 from notification import Notification
 from location import Location
+from occupation import Occupation
 from product import Product
 
 
@@ -25,11 +26,12 @@ class CnesProfessional():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            names=['cnes', 'municipality', 'pf_pj', 'cpf_cnpj', 'cnpj_man', 'tp_unid', 'cbo', 'cns_prof', 'vinculac', 'prof_sus', 'horaoutr', 'horahosp', 'hora_amb', 'competen', 'ufmunres', 'regsaude', 'niv_dep1', 'esfera', 'retencao_2', 'niv_hier_2'],
-            usecols=['cnes', 'municipality'],
+            names=['cnes', 'municipality', 'pf_pj', 'cpf_cnpj', 'cnpj_man', 'tp_unid', 'occupation', 'cns_prof', 'vinculac', 'prof_sus', 'horaoutr', 'horahosp', 'hora_amb', 'competen', 'ufmunres', 'regsaude', 'niv_dep1', 'esfera', 'retencao_2', 'niv_hier_2'],
+            usecols=['cnes', 'municipality', 'occupation'],
             converters={
                 'cnes': str,
-                'municipality': str
+                'municipality': str,
+                'occupation': str
             },
             engine='c'
         )
@@ -41,7 +43,7 @@ class CnesProfessional():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'occupation', 'occupation_group']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
@@ -68,6 +70,7 @@ def main(input, output):
     s3 = S3()
     notification = Notification()
     location = Location(s3)
+    occupation = Occupation(s3)
     
     for csv_path in s3.get_keys(input):
         cnes_professional = CnesProfessional(s3, csv_path)
@@ -75,6 +78,7 @@ def main(input, output):
 
         cnes_professional.df = location.fix_municipality(cnes_professional.df)
         cnes_professional.df = location.add_columns(cnes_professional.df)
+        cnes_professional.df = occupation.add_columns(cnes_professional.df)
 
         cnes_professional.save(output)
         notification.send_email('sauloantuness@gmail.com', cnes_professional.filename, cnes_professional.duration_str)
