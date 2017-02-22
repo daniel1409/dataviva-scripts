@@ -31,7 +31,7 @@ class CnesProfessional():
             converters={
                 'cnes': str,
                 'municipality': str,
-                'occupation': str
+                'occupation': lambda x: str(x)[:4]
             },
             engine='c'
         )

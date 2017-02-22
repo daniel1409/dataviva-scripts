@@ -29,7 +29,6 @@ class CnesBed():
             converters={
                 'municipality': str,
                 'cnes': str,
-                'bed_type': str,
             },
             engine='c'
         )
