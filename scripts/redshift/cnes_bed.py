@@ -24,11 +24,12 @@ class CnesBed():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            names=['cnes','municipality','regsaude','micr_reg','pf_pj','cpf_cnpj','niv_dep','cnpj_man','esfera_a','retencao','tp_unid','niv_hier','tp_leito','codleito','qt_exist','qt_contr','qt_sus','qt_nsus','competen'],
-            usecols=['cnes', 'municipality'],
+            names=['cnes','municipality','regsaude','micr_reg','pf_pj','cpf_cnpj','niv_dep','cnpj_man','esfera_a','retencao','tp_unid','niv_hier','bed_type','codleito','qt_exist','qt_contr','qt_sus','qt_nsus','competen'],
+            usecols=['cnes', 'municipality', 'bed_type'],
             converters={
                 'municipality': str,
-                'cnes': str
+                'cnes': str,
+                'bed_type': str,
             },
             engine='c'
         )
@@ -40,7 +41,7 @@ class CnesBed():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'bed_type']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
@@ -75,7 +76,7 @@ def main(input, output):
         cnes_bed.df = location.fix_municipality(cnes_bed.df)
         cnes_bed.df = location.add_columns(cnes_bed.df)
         cnes_bed.save(output)
-        notification.send_email('sauloantuness@gmail.com', cnes_bed.filename, cnes_bed.duration_str)
+        # notification.send_email('sauloantuness@gmail.com', cnes_bed.filename, cnes_bed.duration_str)
 
 
 if __name__ == '__main__':
