@@ -25,11 +25,11 @@ class CnesEquipment():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            names=['cnes', 'municipality', 'pf_pj', 'cpf_cnpj', 'niv_dep', 'cnpj_man', 'tp_unid', 'tipequip', 'codequip', 'qt_exist', 'qt_uso', 'ind_sus', 'competen', 'regsaude', 'retencao_2', 'niv_hier_2', 'esfera'],
+            names=['cnes', 'municipality', 'pf_pj', 'cpf_cnpj', 'niv_dep', 'cnpj_man', 'tp_unid', 'equipment_type', 'codequip', 'qt_exist', 'qt_uso', 'ind_sus', 'competen', 'regsaude', 'retencao_2', 'niv_hier_2', 'esfera'],
             usecols=['cnes', 'municipality'],
             converters={
                 'cnes': str,
-                'municipality': str
+                'municipality': str,
             },
             engine='c'
         )
@@ -41,7 +41,7 @@ class CnesEquipment():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'equipment_type']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
