@@ -26,7 +26,7 @@ class CnesEquipment():
             sep=',',
             header=0,
             names=['cnes', 'municipality', 'pf_pj', 'cpf_cnpj', 'niv_dep', 'cnpj_man', 'tp_unid', 'equipment_type', 'codequip', 'qt_exist', 'qt_uso', 'ind_sus', 'competen', 'regsaude', 'retencao_2', 'niv_hier_2', 'esfera'],
-            usecols=['cnes', 'municipality'],
+            usecols=['cnes', 'municipality', 'equipment_type'],
             converters={
                 'cnes': str,
                 'municipality': str,
