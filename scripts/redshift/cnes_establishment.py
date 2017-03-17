@@ -24,15 +24,50 @@ class CnesEstablishment():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            names=['cnes','municipality','cod_cep','cpf_cnpj','pf_pj','cnpj_man','sus_bond','establishment_type','tp_prest','nivate_a','nivate_h','qt_leito_hosp_cirurg','qt_leito_hosp_clin','qt_leito_hosp_complex','qt_sala_pedi_ue','qt_sala_rep_pedi_ue','qt_cons_odonto_ue','qt_sala_higie_ue','qt_sala_gesso_ue','qt_sala_curativo_ue','qt_sala_peqcirur_ue','qt_sala_cons_med_ue','urgemerg','qt_cons_clincbasica_amb','qt_cons_clincesp_amb','qt_cons_clincind_amb','qt_cons_nmed_amb','qt_sala_rep_ped_amb','qt_cons_odonto_amb','qt_sala_peqcirur_amb','qt_sala_enf_amb','qt_sala_imun_amb','qt_sala_nebu_amb','qt_sala_gesso_amb','qt_sala_cura_amb','qt_sala_ciruramb_amb','atendamb','qt_sala_cirur_cc','qt_sala_recup_cc','qt_sala_ciruramb_cc','centrcir','qt_sala_preparto_co','qt_sala_partonor_co','qt_sala_curetagem_co','qt_sala_cirur_co','centrobs','qt_leito_rep_pedi_ue','qt_equip_odonto_ue','qt_leito_rep_pedi_amb','qt_equip_odonto_amb','qt_leito_recu_cc','qt_leito_preparto_co','centrneo','atendhos','coletres','qt_sala_atend_adulto_ue','qt_sala_obs_adulto_ue','qt_sala_rep_amb','qt_leito_rep_ue','qt_leito_rep_amb','qt_leito_rn_nn','atencaobasica_amb','mediacomplexidade_amb','altacomplexidade_amb','internacao_hosp','mediacomplexidade_hosp','altacomplexidade_hosp','tipointernacao','tipodeambulatorio','tipodesadt','tipodeurgencia','niv_dep1','regsaude','esfera','retencao_2','niv_hier_2'],
-            usecols=['cnes', 'municipality', 'establishment_type', 'sus_bond'],
+            names=['cnes', 'tp_unid', 'codmun', 'vinc_sus', 'tp_prest', 'nivate_a', 'nivate_h', 'urgemerg', 'atendamb', 'centrcir', 'centrobs', 'centrneo', 'atendhos', 'coletres', 'niv_dep1', 'regsaude', 'esfera', 'retencao_2', 'niv_hier_2', 'competen1'],
             converters={
-                'municipality': str,
                 'cnes': str,
-                'establishment_type': str,
+                'municipality': str,
+                'sus_bond': str,
+                'provider_type': str,
+                'ambulatory_attention': str,
+                'hospital_attention': str,
+                'emergency_facilities': str,
+                'ambulatory_care_facilities': str,
+                'surgery_center_facilities': int,
+                'obstetrical_center_facilities': int,
+                'neonatal_unit_facilities': str,
+                'hospital_care': str,
+                'selective_waste_collection': str,
+                'year': int,
+                'dependency_level': str,
+                'health_region': str,
+                'administrative_sphere': str,
+                'tax_withholding': str,
+                'hierarchy_level': str,
+                'unid_type': str,
             },
             engine='c'
-        )
+        ).rename(columns={
+            'tp_unid': 'unit_type',
+            'codmun': 'municipality',
+            'vinc_sus': 'sus_bond',
+            'tp_prest': 'provider_type',
+            'nivate_a': 'ambulatory_attention',
+            'nivate_h': 'hospital_attention',
+            'urgemerg': 'emergency_facilities',
+            'atendamb': 'ambulatory_care_facilities',
+            'centrobs': 'obstetrical_center_facilities',
+            'centrneo': 'neonatal_unit_facilities',
+            'atendhos': 'hospital_care',
+            'coletres': 'selective_waste_collection',
+            'niv_dep1': 'dependency_level',
+            'regsaude': 'health_region',
+            'esfera': 'administrative_sphere',
+            'retencao_2': 'tax_withholding',
+            'niv_hier_2': 'hierarchy_level',
+            'competen1': 'year'
+        })
 
     def save(self, output):
         csv_buffer = BytesIO()
@@ -41,7 +76,7 @@ class CnesEstablishment():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'establishment_type', 'sus_bond']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'sus_bond', 'provider_type', 'ambulatory_attention', 'hospital_attention', 'emergency_facilities', 'ambulatory_care_facilities', 'surgery_center_facilities', 'obstetrical_center_facilities', 'neonatal_unit_facilities', 'hospital_care', 'selective_waste_collection', 'year', 'dependency_level', 'health_region', 'adminative_sphere', 'tax_withholding', 'hierarchy_level', 'unit_type']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
@@ -50,15 +85,6 @@ class CnesEstablishment():
         self.duration_str = '%02d:%02d' % (self.duration / 60, self.duration % 60)
         print '  Saved.'
         print '  Time: %s' % self.duration_str
-
-    def add_year(self):
-        try:
-            year = self.filename.replace('_','.').split('.')[2]
-            self.df['year'] = int(year)
-        except:
-            print 'Filename must be in format "establishment_yyyy.csv".'
-
-        print '+ year'
 
 @click.command()
 @click.argument('input', default='redshift/raw_from_mysql/cnes/cnes_establishment', type=click.Path())
@@ -71,13 +97,11 @@ def main(input, output):
     for csv_path in s3.get_keys(input):
         cnes_establishment = CnesEstablishment(s3, csv_path)
 
-        cnes_establishment.add_year()
-
         cnes_establishment.df = location.fix_municipality(cnes_establishment.df)
         cnes_establishment.df = location.add_columns(cnes_establishment.df)
 
         cnes_establishment.save(output)
-        notification.send_email('sauloantuness@gmail.com', cnes_establishment.filename, cnes_establishment.duration_str)
+        # notification.send_email('sauloantuness@gmail.com', cnes_establishment.filename, cnes_establishment.duration_str)
 
 if __name__ == '__main__':
     main()
