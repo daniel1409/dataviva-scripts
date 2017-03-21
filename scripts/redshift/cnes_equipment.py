@@ -25,14 +25,34 @@ class CnesEquipment():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            names=['cnes', 'municipality', 'pf_pj', 'cpf_cnpj', 'niv_dep', 'cnpj_man', 'tp_unid', 'equipment_type', 'codequip', 'qt_exist', 'qt_uso', 'ind_sus', 'competen', 'regsaude', 'retencao_2', 'niv_hier_2', 'esfera'],
-            usecols=['cnes', 'municipality', 'equipment_type'],
+            names=['cnes', 'codmun', 'niv_dep', 'tp_unid', 'tipequip', 'codequip', 'qt_exist', 'qt_uso', 'ind_sus', 'competen1', 'regsaude'],
             converters={
-                'cnes': str,
-                'municipality': str,
+                'cnes' : str,
+                'codmun' : str,
+                'niv_dep' : str,
+                'tp_unid' : str,
+                'tipequip' : str,
+                'codequip' : str,
+                'qt_exist' : str,
+                'qt_uso' : str,
+                'ind_sus' : str,
+                'competen1' : int,
+                'regsaude' : str,
             },
             engine='c'
-        )
+        ).rename(columns={
+            'cnes' : 'cnes',
+            'codmun' : 'municipality',
+            'niv_dep' : 'dependency_level',
+            'tp_unid' : 'unit_type',
+            'tipequip' : 'equipment_type',
+            'codequip' : 'equipment_code',
+            'qt_exist' : 'equipment_quantity',
+            'qt_uso' : 'equipment_quantity_in_use',
+            'ind_sus' : 'sus_availability_indicator',
+            'competen1' : 'year',
+            'regsaude' : 'health_region'
+        })
 
     def save(self, output):
         csv_buffer = BytesIO()
@@ -41,7 +61,7 @@ class CnesEquipment():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'equipment_type']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'dependency_level', 'unit_type', 'equipment_type', 'equipment_code', 'equipment_quantity', 'equipment_quantity_in_use', 'sus_availability_indicator', 'health_region']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
@@ -71,13 +91,12 @@ def main(input, output):
     
     for csv_path in s3.get_keys(input):
         cnes_equipment = CnesEquipment(s3, csv_path)
-        cnes_equipment.add_year()
 
         cnes_equipment.df = location.fix_municipality(cnes_equipment.df)
         cnes_equipment.df = location.add_columns(cnes_equipment.df)
 
         cnes_equipment.save(output)
-        notification.send_email('sauloantuness@gmail.com', cnes_equipment.filename, cnes_equipment.duration_str)
+        # notification.send_email('sauloantuness@gmail.com', cnes_equipment.filename, cnes_equipment.duration_str)
 
 
 if __name__ == '__main__':
