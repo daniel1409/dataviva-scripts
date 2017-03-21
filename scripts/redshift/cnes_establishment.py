@@ -79,7 +79,7 @@ class CnesEstablishment():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'unit_type', 'sus_bond', 'provider_type', 'ambulatory_attention', 'hospital_attention', 'emergency_facilities', 'ambulatory_care_facilities', 'surgery_center_facilities', 'obstetrical_center_facilities', 'neonatal_unit_facilities', 'hospital_care', 'selective_waste_collection', 'dependency_level', 'health_region', 'administrative_sphere', 'tax_withholding', 'hierarchy_level',]
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'unit_type', 'sus_bond', 'provider_type', 'ambulatory_attention', 'hospital_attention', 'emergency_facilities', 'ambulatory_care_facilities', 'surgery_center_facilities', 'obstetrical_center_facilities', 'neonatal_unit_facilities', 'hospital_care', 'selective_waste_collection', 'dependency_level', 'health_region', 'administrative_sphere', 'tax_withholding', 'hierarchy_level']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
