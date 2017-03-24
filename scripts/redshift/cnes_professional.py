@@ -64,7 +64,7 @@ class CnesProfessional():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'establishment', 'unit_type', 'occupation_group', 'occupation_family', 'cns_number', 'professional_link', 'sus_healthcare_professional', 'other_hours_worked', 'hospital_hour', 'ambulatory_hour', 'year', 'health_region']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'establishment', 'unit_type', 'occupation_group', 'occupation_family', 'cns_number', 'professional_link', 'sus_healthcare_professional', 'other_hours_worked', 'hospital_hour', 'ambulatory_hour', 'health_region']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
