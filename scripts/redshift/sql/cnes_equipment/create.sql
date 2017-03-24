@@ -8,7 +8,7 @@ CREATE TABLE cnes_equipment
     microregion                      varchar(5) encode lzo,
     state                            varchar(2) encode lzo,
     municipality                     varchar(7) encode lzo,
-    cnes                             varchar(7) encode lzo,
+    establishment                    varchar(7) encode lzo,
     dependency_level                 varchar(1) encode lzo,
     unit_type                        varchar(2) encode lzo,
     equipment_type                   varchar(1) encode lzo,
@@ -18,4 +18,4 @@ CREATE TABLE cnes_equipment
     sus_availability_indicator       varchar(1) encode lzo,
     health_region                    char(5) encode lzo
     
-) sortkey(year,region,mesoregion,microregion,state,municipality,cnes,dependency_level,unit_type,equipment_type,equipment_code,sus_availability_indicator,health_region);
+) sortkey(year,region,mesoregion,microregion,state,municipality,establishment,dependency_level,unit_type,equipment_type,equipment_code,sus_availability_indicator,health_region);
