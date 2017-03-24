@@ -51,17 +51,18 @@ class CnesEstablishment():
             },
             engine='c'
         ).rename(columns={
+            'cnes' : 'establishment',
             'tp_unid': 'unit_type',
             'codmun': 'municipality',
             'vinc_sus': 'sus_bond',
             'tp_prest': 'provider_type',
             'nivate_a': 'ambulatory_attention',
             'nivate_h': 'hospital_attention',
-            'urgemerg': 'emergency_facilities',
-            'atendamb': 'ambulatory_care_facilities',
-            'centrcir': 'surgery_center_facilities',
-            'centrobs': 'obstetrical_center_facilities',
-            'centrneo': 'neonatal_unit_facilities',
+            'urgemerg': 'emergency_facility',
+            'atendamb': 'ambulatory_care_facility',
+            'centrcir': 'surgery_center_facility',
+            'centrobs': 'obstetrical_center_facility',
+            'centrneo': 'neonatal_unit_facility',
             'atendhos': 'hospital_care',
             'coletres': 'selective_waste_collection',
             'niv_dep1': 'dependency_level',
@@ -79,7 +80,7 @@ class CnesEstablishment():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'unit_type', 'sus_bond', 'provider_type', 'ambulatory_attention', 'hospital_attention', 'emergency_facilities', 'ambulatory_care_facilities', 'surgery_center_facilities', 'obstetrical_center_facilities', 'neonatal_unit_facilities', 'hospital_care', 'selective_waste_collection', 'dependency_level', 'health_region', 'administrative_sphere', 'tax_withholding', 'hierarchy_level']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'establishment', 'unit_type', 'sus_bond', 'provider_type', 'ambulatory_attention', 'hospital_attention', 'emergency_facility', 'ambulatory_care_facility', 'surgery_center_facility', 'obstetrical_center_facility', 'neonatal_unit_facility', 'hospital_care', 'selective_waste_collection', 'dependency_level', 'health_region', 'administrative_sphere', 'tax_withholding', 'hierarchy_level']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())

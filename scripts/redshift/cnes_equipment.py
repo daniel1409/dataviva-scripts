@@ -41,7 +41,7 @@ class CnesEquipment():
             },
             engine='c'
         ).rename(columns={
-            'cnes' : 'cnes',
+            'cnes' : 'establishment',
             'codmun' : 'municipality',
             'niv_dep' : 'dependency_level',
             'tp_unid' : 'unit_type',
@@ -61,7 +61,7 @@ class CnesEquipment():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'dependency_level', 'unit_type', 'equipment_type', 'equipment_code', 'equipment_quantity', 'equipment_quantity_in_use', 'sus_availability_indicator', 'health_region']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'establishment', 'dependency_level', 'unit_type', 'equipment_type', 'equipment_code', 'equipment_quantity', 'equipment_quantity_in_use', 'sus_availability_indicator', 'health_region']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
