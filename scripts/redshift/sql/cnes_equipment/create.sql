@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS cnes_equipment CASCADE;
 
 CREATE TABLE cnes_equipment
 (
-    year                             integer,
+    year                             integer encode lzo,
     region                           varchar(1) encode lzo,
     mesoregion                       varchar(4) encode lzo,
     microregion                      varchar(5) encode lzo,

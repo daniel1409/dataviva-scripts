@@ -26,15 +26,36 @@ class CnesProfessional():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            names=['cnes', 'municipality', 'pf_pj', 'cpf_cnpj', 'cnpj_man', 'tp_unid', 'occupation', 'cns_prof', 'vinculac', 'prof_sus', 'horaoutr', 'horahosp', 'hora_amb', 'competen', 'ufmunres', 'regsaude', 'niv_dep1', 'esfera', 'retencao_2', 'niv_hier_2'],
-            usecols=['cnes', 'municipality', 'occupation'],
+            names=['cnes', 'codmun', 'tp_unid', 'cbo', 'cns_prof', 'vinculac', 'prof_sus', 'horaoutr', 'horahosp', 'hora_amb', 'competen1', 'regsaude'],
             converters={
-                'cnes': str,
-                'municipality': str,
-                'occupation': lambda x: str(x)[:4]
+                'cnes' : str,
+                'codmun': str,
+                'tp_unid' : str,
+                'cbo' : lambda x: str(x)[:4],
+                'cns_prof' : str,
+                'vinculac' : str,
+                'prof_sus' : str,
+                'horaoutr' : int,
+                'horahosp' : int,
+                'hora_amb' : int,
+                'competen1' : int,
+                'regsaude' : str
             },
             engine='c'
-        )
+        ).rename(columns={
+            'cnes' : 'establishment',
+            'codmun': 'municipality',
+            'tp_unid' : 'unit_type',
+            'cbo' : 'occupation_family',
+            'cns_prof' : 'cns_number',
+            'vinculac' : 'professional_link',
+            'prof_sus' : 'sus_healthcare_professional',
+            'horaoutr' : 'other_hours_worked',
+            'horahosp' : 'hospital_hour',
+            'hora_amb' : 'ambulatory_hour',
+            'competen1' : 'year',
+            'regsaude' : 'health_region'
+        })
 
     def save(self, output):
         csv_buffer = BytesIO()
@@ -43,7 +64,7 @@ class CnesProfessional():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'occupation', 'occupation_group']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'establishment', 'unit_type', 'occupation_group', 'occupation_family', 'cns_number', 'professional_link', 'sus_healthcare_professional', 'other_hours_worked', 'hospital_hour', 'ambulatory_hour', 'year', 'health_region']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
@@ -52,15 +73,6 @@ class CnesProfessional():
         self.duration_str = '%02d:%02d' % (self.duration / 60, self.duration % 60)
         print '  Saved.'
         print '  Time: %s' % self.duration_str
-
-    def add_year(self):
-        try:
-            year = self.filename.replace('_','.').split('.')[2]
-            self.df['year'] = int(year)
-        except:
-            print 'Filename must be in format "cnes_professional_yyyy.csv".'
-
-        print '+ year'
 
 
 @click.command()
@@ -74,14 +86,13 @@ def main(input, output):
     
     for csv_path in s3.get_keys(input):
         cnes_professional = CnesProfessional(s3, csv_path)
-        cnes_professional.add_year()
 
         cnes_professional.df = location.fix_municipality(cnes_professional.df)
         cnes_professional.df = location.add_columns(cnes_professional.df)
         cnes_professional.df = occupation.add_columns(cnes_professional.df)
 
         cnes_professional.save(output)
-        notification.send_email('sauloantuness@gmail.com', cnes_professional.filename, cnes_professional.duration_str)
+        # notification.send_email('sauloantuness@gmail.com', cnes_professional.filename, cnes_professional.duration_str)
 
 
 if __name__ == '__main__':
