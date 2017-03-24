@@ -25,12 +25,12 @@ class Rais():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            names=['employee', 'establishment', 'municipality', 'gender', 'age', 'ethnicity', 'literacy', 'wage', 'occupation', 'cnae', 'establishment_size', 'simple', 'legal_nature'],
+            names=['employee', 'establishment', 'municipality', 'gender', 'age', 'ethnicity', 'literacy', 'wage', 'occupation_family', 'cnae', 'establishment_size', 'simple', 'legal_nature'],
             converters={
                 'employee': str,
                 'establishment': str,
                 'municipality': str,
-                'occupation': str,
+                'occupation_family': str,
                 'cnae': lambda x: str(x)[:5],
                 'age': lambda x: 0 if not x or x == 'NULL' else x,
                 'literacy': lambda x: -1 if not x or x == 'NULL' else x,
@@ -47,7 +47,7 @@ class Rais():
                 'ethnicity': 'int8',
                 'literacy': 'int8',
                 'wage': 'float64',
-                'occupation': 'str',
+                'occupation_family': 'str',
                 'cnae': 'str',
                 'establishment_size': 'int8',
                 'simple': 'int8',
@@ -63,7 +63,7 @@ class Rais():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'occupation', 'occupation_group', 'cnae', 'cnae_division', 'cnae_section', 'establishment', 'employee', 'ethnicity', 'establishment_size', 'gender', 'legal_nature', 'literacy', 'simple', 'age', 'wage']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'occupation_family', 'occupation_group', 'cnae', 'cnae_division', 'cnae_section', 'establishment', 'employee', 'ethnicity', 'establishment_size', 'gender', 'legal_nature', 'literacy', 'simple', 'age', 'wage']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())

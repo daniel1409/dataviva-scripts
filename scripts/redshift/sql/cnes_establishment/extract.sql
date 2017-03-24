@@ -1,0 +1,3 @@
+time mysql -h<host> -u<user> -p<password> <database> --batch -e 
+"select 'cnes', 'tp_unid', 'codmun', 'vinc_sus', 'tp_prest', 'nivate_a', 'nivate_h', 'urgemerg', 'atendamb', 'centrcir', 'centrobs', 'centrneo', 'atendhos', 'coletres', 'niv_dep1', 'regsaude', 'esfera', 'retencao_2', 'niv_hier_2', 'competen1' from ESTAB_2008_STEP3" | 
+sed 's/\t/","/g;s/^/"/;s/$/"/;s/\n//g' > cnes_establishment_2008.csv &

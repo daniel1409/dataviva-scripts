@@ -18,16 +18,16 @@ class Occupation():
             }
         )
 
-        occupation = []
+        occupation_family = []
         occupation_group = []
 
         for id in df['id'].tolist():
             if len(id) == 4:
-                occupation.append(id)
+                occupation_family.append(id)
                 occupation_group.append(id[0])
 
         df = pd.DataFrame({
-            'occupation': pd.Series(occupation),
+            'occupation_family': pd.Series(occupation_family),
             'occupation_group': pd.Series(occupation_group)
         })
 
@@ -37,7 +37,7 @@ class Occupation():
         df = pd.merge(
                 df, 
                 self.occupations_df,
-                on='occupation',
+                on='occupation_family',
                 how='left'
             )
 
