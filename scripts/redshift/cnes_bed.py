@@ -24,14 +24,34 @@ class CnesBed():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            names=['cnes','municipality','regsaude','micr_reg','pf_pj','cpf_cnpj','niv_dep','cnpj_man','esfera_a','retencao','tp_unid','niv_hier','bed_type','codleito','qt_exist','qt_contr','qt_sus','qt_nsus','competen'],
-            usecols=['cnes', 'municipality', 'bed_type'],
+            names=['cnes', 'codmun', 'tp_unid', 'tp_leito', 'codleito', 'qt_exist', 'qt_contr', 'qt_sus', 'qt_nsus', 'competen1', 'regsaude'],
             converters={
-                'municipality': str,
-                'cnes': str,
+                'cnes' : str,
+                'codmun' : str,
+                'tp_unid' : str,
+                'tp_leito' : int,
+                'codleito' : str,
+                'qt_exist' : int,
+                'qt_contr' : int,
+                'qt_sus' : int,
+                'qt_nsus' : int,
+                'competen1' : int,
+                'regsaude' : str
             },
             engine='c'
-        )
+        ).rename(columns={
+            'cnes' : 'establishment',
+            'codmun': 'municipality',
+            'tp_unid' : 'unit_type',
+            'tp_leito' : 'bed_type',
+            'codleito' : 'bed_type_per_specialty',
+            'qt_exist' : 'number_existing_bed',
+            'qt_contr' : 'number_existing_contract',
+            'qt_sus' : 'number_sus_bed',
+            'qt_nsus' : 'number_non_sus_bed',
+            'competen1' : 'year',
+            'regsaude' : 'health_region'
+        })
 
     def save(self, output):
         csv_buffer = BytesIO()
@@ -40,7 +60,7 @@ class CnesBed():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'cnes', 'bed_type']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'establishment', 'unit_type', 'bed_type', 'bed_type_per_specialty', 'number_existing_bed', 'number_existing_contract', 'number_sus_bed', 'number_non_sus_bed', 'health_region']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
@@ -49,15 +69,6 @@ class CnesBed():
         self.duration_str = '%02d:%02d' % (self.duration / 60, self.duration % 60)
         print '  Saved.'
         print '  Time: %s' % self.duration_str
-
-    def add_year(self):
-        try:
-            year = self.filename.replace('_','.').split('.')[2]
-            self.df['year'] = int(year)
-        except:
-            print 'Filename must be in format "bed_yyyy.csv".'
-
-        print '+ year'
 
 @click.command()
 @click.argument('input', default='redshift/raw_from_mysql/cnes/cnes_bed', type=click.Path())
@@ -69,8 +80,6 @@ def main(input, output):
 
     for csv_path in s3.get_keys(input):
         cnes_bed = CnesBed(s3, csv_path)
-
-        cnes_bed.add_year()
 
         cnes_bed.df = location.fix_municipality(cnes_bed.df)
         cnes_bed.df = location.add_columns(cnes_bed.df)
