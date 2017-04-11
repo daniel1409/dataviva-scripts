@@ -14,11 +14,11 @@ CREATE TABLE cnes_establishment
     provider_type                    varchar(2) encode lzo,
     ambulatory_attention             varchar(1) encode lzo,
     hospital_attention               varchar(1) encode lzo,
-    emergency_facilities             varchar(1) encode lzo,
-    ambulatory_care_facilities       varchar(1) encode lzo,
-    surgery_center_facilities        varchar(1) encode lzo,
-    obstetrical_center_facilities    varchar(1) encode lzo,
-    neonatal_unit_facilities         varchar(1) encode lzo,
+    emergency_facility               varchar(1) encode lzo,
+    ambulatory_care_facility         varchar(1) encode lzo,
+    surgery_center_facility          varchar(1) encode lzo,
+    obstetrical_center_facility      varchar(1) encode lzo,
+    neonatal_unit_facility           varchar(1) encode lzo,
     hospital_care                    varchar(1) encode lzo,
     selective_waste_collection       varchar(1) encode lzo,
     dependency_level                 varchar(1) encode lzo,
@@ -26,5 +26,4 @@ CREATE TABLE cnes_establishment
     administrative_sphere            varchar(2) encode lzo,
     tax_withholding                  varchar(2) encode lzo,
     hierarchy_level                  varchar(2) encode lzo
-    
 ) sortkey(year,region,mesoregion,microregion,state,municipality);
