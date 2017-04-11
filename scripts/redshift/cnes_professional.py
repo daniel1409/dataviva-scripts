@@ -26,7 +26,7 @@ class CnesProfessional():
             self.s3.read_csv(self.csv_path),
             sep=',',
             header=0,
-            names=['cnes', 'codmun', 'tp_unid', 'cbo', 'cns_prof', 'vinculac', 'prof_sus', 'horaoutr', 'horahosp', 'hora_amb', 'competen1', 'regsaude'],
+            names=['cnes', 'codmun', 'tp_unid', 'cbo', 'cns_prof', 'vinculac', 'prof_sus', 'horaoutr', 'horahosp', 'hora_amb', 'competen1', 'regsaude', 'niv_hier_2'],
             converters={
                 'cnes' : str,
                 'codmun': str,
@@ -39,7 +39,8 @@ class CnesProfessional():
                 'horahosp' : int,
                 'hora_amb' : int,
                 'competen1' : int,
-                'regsaude' : str
+                'regsaude' : str,
+                'niv_hier_2' : str,
             },
             engine='c'
         ).rename(columns={
@@ -54,7 +55,8 @@ class CnesProfessional():
             'horahosp' : 'hospital_hour',
             'hora_amb' : 'ambulatory_hour',
             'competen1' : 'year',
-            'regsaude' : 'health_region'
+            'regsaude' : 'health_region',
+            'niv_hier_2': 'hierarchy_level',
         })
 
     def save(self, output):
@@ -64,7 +66,7 @@ class CnesProfessional():
             csv_buffer,
             sep="|",
             index=False,
-            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'establishment', 'unit_type', 'occupation_group', 'occupation_family', 'cns_number', 'professional_link', 'sus_healthcare_professional', 'other_hours_worked', 'hospital_hour', 'ambulatory_hour', 'health_region']
+            columns=['year', 'region', 'mesoregion', 'microregion', 'state', 'municipality', 'establishment', 'unit_type', 'occupation_group', 'occupation_family', 'cns_number', 'professional_link', 'sus_healthcare_professional', 'other_hours_worked', 'hospital_hour', 'ambulatory_hour', 'health_region', 'hierarchy_level']
         )
 
         self.s3.resource.Object('dataviva-etl', path.join(output, self.filename)).put(Body=csv_buffer.getvalue())
