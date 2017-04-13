@@ -3,7 +3,7 @@ DROP TABLE IF EXISTS cnes_search CASCADE;
 CREATE TABLE cnes_search
 (
     id           varchar(7)    encode lzo,
-    name_pt      varchar(255)  encode lzo,
+    name         varchar(255)  encode lzo,
     region       varchar(255)  encode lzo,
     mesoregion   varchar(255)  encode lzo,
     microregion  varchar(255)  encode lzo,
